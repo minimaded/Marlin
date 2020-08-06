@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,7 +26,7 @@
 
 #include "../../inc/MarlinConfigPre.h"
 
-#if HAS_LCD_MENU && HAS_TRINAMIC_CONFIG
+#if HAS_TRINAMIC_CONFIG && HAS_LCD_MENU
 
 #include "menu.h"
 #include "../../module/stepper/indirection.h"
@@ -148,7 +148,7 @@ void menu_tmc_current() {
 
 #endif
 
-#if ENABLED(SENSORLESS_HOMING)
+#if USE_SENSORLESS || USE_COLLISION_DETECTION
 
   #define TMC_EDIT_STORED_SGT(ST) EDIT_ITEM_P(int4, PSTR(STR_##ST), &stepper##ST.stored.homing_thrs, stepper##ST.sgt_min, stepper##ST.sgt_max, []{ stepper##ST.refresh_homing_thrs(); });
 
@@ -177,6 +177,89 @@ void menu_tmc_current() {
       #endif
       #if Z4_SENSORLESS
         TMC_EDIT_STORED_SGT(Z4);
+      #endif
+    #endif
+    #if E0_SENSORLESS
+      TMC_EDIT_STORED_SGT(E0);
+      #if E1_SENSORLESS
+        TMC_EDIT_STORED_SGT(E1);
+      #endif
+      #if E2_SENSORLESS
+        TMC_EDIT_STORED_SGT(E2);
+      #endif
+      #if E3_SENSORLESS
+        TMC_EDIT_STORED_SGT(E3);
+      #endif
+      #if E4_SENSORLESS
+        TMC_EDIT_STORED_SGT(E4);
+      #endif
+      #if E5_SENSORLESS
+        TMC_EDIT_STORED_SGT(E5);
+      #endif
+      #if E6_SENSORLESS
+        TMC_EDIT_STORED_SGT(E6);
+      #endif
+      #if E7_SENSORLESS
+        TMC_EDIT_STORED_SGT(E7);
+      #endif
+    #endif
+    END_MENU();
+  }
+#endif
+ 
+#if USE_COLLISION_DETECTION
+ 
+ #define TMC_EDIT_STORED_SGV(ST) EDIT_ITEM_P(uint16_3, PSTR(STR_##ST), &stepper##ST.stored.velocity_thrs, 0, 10000, []{ stepper##ST.refresh_velocity_thrs(); });
+ 
+  void menu_tmc_velocity_thrs() {
+    START_MENU();
+    BACK_ITEM(MSG_TMC_DRIVERS);
+    #if X_SENSORLESS
+      TMC_EDIT_STORED_SGV(X);
+      #if X2_SENSORLESS
+        TMC_EDIT_STORED_SGV(X2);
+      #endif
+    #endif
+    #if Y_SENSORLESS
+      TMC_EDIT_STORED_SGV(Y);
+      #if Y2_SENSORLESS
+        TMC_EDIT_STORED_SGV(Y2);
+      #endif
+    #endif
+    #if Z_SENSORLESS
+      TMC_EDIT_STORED_SGV(Z);
+      #if Z2_SENSORLESS
+        TMC_EDIT_STORED_SGV(Z2);
+      #endif
+      #if Z3_SENSORLESS
+        TMC_EDIT_STORED_SGV(Z3);
+      #endif
+      #if Z4_SENSORLESS
+        TMC_EDIT_STORED_SGV(Z4);
+      #endif
+    #endif
+    #if E0_SENSORLESS
+      TMC_EDIT_STORED_SGV(E0);
+      #if E1_SENSORLESS
+        TMC_EDIT_STORED_SGV(E1);
+      #endif
+      #if E2_SENSORLESS
+        TMC_EDIT_STORED_SGV(E2);
+      #endif
+      #if E3_SENSORLESS
+        TMC_EDIT_STORED_SGV(E3);
+      #endif
+      #if E4_SENSORLESS
+        TMC_EDIT_STORED_SGV(E4);
+      #endif
+      #if E5_SENSORLESS
+        TMC_EDIT_STORED_SGV(E5);
+      #endif
+      #if E6_SENSORLESS
+        TMC_EDIT_STORED_SGV(E6);
+      #endif
+      #if E7_SENSORLESS
+        TMC_EDIT_STORED_SGV(E7);
       #endif
     #endif
     END_MENU();
@@ -254,6 +337,10 @@ void menu_tmc() {
   #endif
   #if ENABLED(SENSORLESS_HOMING)
     SUBMENU(MSG_TMC_HOMING_THRS, menu_tmc_homing_thrs);
+  #endif
+  #if USE_COLLISION_DETECTION
+      SUBMENU(MSG_TMC_STALL_THRS, menu_tmc_homing_thrs);
+      SUBMENU(MSG_TMC_VELOCITY_THRS, menu_tmc_velocity_thrs);
   #endif
   #if HAS_STEALTHCHOP
     SUBMENU(MSG_TMC_STEPPING_MODE, menu_tmc_step_mode);
