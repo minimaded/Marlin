@@ -735,32 +735,107 @@ void reset_trinamic_drivers() {
     TMC_INIT(E7, STEALTH_AXIS_E);
   #endif
 
-  #if USE_SENSORLESS
+  #if USE_SENSORLESS || USE_COLLISION_DETECTION
     #if X_SENSORLESS
       stepperX.homing_threshold(X_STALL_SENSITIVITY);
-      #if AXIS_HAS_STALLGUARD(X2)
+      #if X2_SENSORLESS
         stepperX2.homing_threshold(CAT(TERN(X2_SENSORLESS, X2, X), _STALL_SENSITIVITY));
       #endif
-    #endif
+    #endif // X_SENSORLESS
     #if Y_SENSORLESS
       stepperY.homing_threshold(Y_STALL_SENSITIVITY);
-      #if AXIS_HAS_STALLGUARD(Y2)
+      #if X2_SENSORLESS
         stepperY2.homing_threshold(CAT(TERN(Y2_SENSORLESS, Y2, Y), _STALL_SENSITIVITY));
       #endif
-    #endif
+    #endif // Y_SENSORLESS
     #if Z_SENSORLESS
       stepperZ.homing_threshold(Z_STALL_SENSITIVITY);
-      #if AXIS_HAS_STALLGUARD(Z2)
+      #if Z2_SENSORLESS
         stepperZ2.homing_threshold(CAT(TERN(Z2_SENSORLESS, Z2, Z), _STALL_SENSITIVITY));
       #endif
-      #if AXIS_HAS_STALLGUARD(Z3)
+      #if Z3_SENSORLESS
         stepperZ3.homing_threshold(CAT(TERN(Z3_SENSORLESS, Z3, Z), _STALL_SENSITIVITY));
       #endif
-      #if AXIS_HAS_STALLGUARD(Z4)
+      #if Z4_SENSORLESS
         stepperZ4.homing_threshold(CAT(TERN(Z4_SENSORLESS, Z4, Z), _STALL_SENSITIVITY));
       #endif
-    #endif
-  #endif
+    #endif // Z_SENSORLESS
+    #if E0_SENSORLESS
+      stepperE0.homing_threshold(E0_STALL_SENSITIVITY);
+      #if E1_SENSORLESS
+        stepperE1.homing_threshold(CAT(TERN(E1_SENSORLESS, E1, E0), _STALL_SENSITIVITY));
+      #endif
+      #if E2_SENSORLESS
+        stepperE2.homing_threshold(CAT(TERN(E2_SENSORLESS, E2, E0), _STALL_SENSITIVITY));
+      #endif
+      #if E3_SENSORLESS
+        stepperE3.homing_threshold(CAT(TERN(E3_SENSORLESS, E3, E0), _STALL_SENSITIVITY));
+      #endif
+      #if E4_SENSORLESS
+        stepperE4.homing_threshold(CAT(TERN(E4_SENSORLESS, E4, E0), _STALL_SENSITIVITY));
+      #endif
+      #if E5_SENSORLESS
+        stepperE5.homing_threshold(CAT(TERN(E5_SENSORLESS, E5, E0), _STALL_SENSITIVITY));
+      #endif
+      #if E6_SENSORLESS
+        stepperE6.homing_threshold(CAT(TERN(E6_SENSORLESS, E6, E0), _STALL_SENSITIVITY));
+      #endif
+      #if E7_SENSORLESS
+        stepperE7.homing_threshold(CAT(TERN(E7_SENSORLESS, E7, E0), _STALL_SENSITIVITY));
+      #endif
+    #endif // E0_SENSORLESS
+  #endif // USE_SENSORLESS || USE_COLLISION_DETECTION
+  
+  #if USE_COLLISION_DETECTION
+    #if X_SENSORLESS
+      stepperX.velocity_threshold(X_VELOCITY_THRESHOLD);
+      #if X2_SENSORLESS
+        stepperX2.velocity_threshold(CAT(TERN(X2_SENSORLESS, X2, X), _VELOCITY_THRESHOLD));
+      #endif
+    #endif // X_SENSORLESS
+    #if Y_SENSORLESS
+      stepperY.velocity_threshold(Y_VELOCITY_THRESHOLD);
+      #if Y2_SENSORLESS
+        stepperY2.velocity_threshold(CAT(TERN(Y2_SENSORLESS, Y2, Y), _VELOCITY_THRESHOLD));
+      #endif
+    #endif // Y_SENSORLESS
+    #if Z_SENSORLESS
+      stepperZ.velocity_threshold(Z_VELOCITY_THRESHOLD);
+      #if Z2_SENSORLESS
+        stepperZ2.velocity_threshold(CAT(TERN(Z2_SENSORLESS, Z2, Z), _VELOCITY_THRESHOLD));
+      #endif
+      #if Z3_SENSORLESS
+        stepperZ3.velocity_threshold(CAT(TERN(Z3_SENSORLESS, Z3, Z), _VELOCITY_THRESHOLD));
+      #endif
+      #if Z4_SENSORLESS
+        stepperZ4.velocity_threshold(CAT(TERN(Z4_SENSORLESS, Z4, Z), _VELOCITY_THRESHOLD));
+      #endif
+    #endif // Z_SENSORLESS
+    #if E0_SENSORLESS
+      stepperE0.velocity_threshold(E0_VELOCITY_THRESHOLD);
+      #if E1_SENSORLESS
+        stepperE1.velocity_threshold(CAT(TERN(E1_SENSORLESS, E1, E0), _VELOCITY_THRESHOLD));
+      #endif
+      #if E2_SENSORLESS
+        stepperE2.velocity_threshold(CAT(TERN(E2_SENSORLESS, E2, E0), _VELOCITY_THRESHOLD));
+      #endif
+      #if E3_SENSORLESS
+        stepperE3.velocity_threshold(CAT(TERN(E3_SENSORLESS, E3, E0), _VELOCITY_THRESHOLD));
+      #endif
+      #if E4_SENSORLESS
+        stepperE4.velocity_threshold(CAT(TERN(E4_SENSORLESS, E4, E0), _VELOCITY_THRESHOLD));
+      #endif
+      #if E5_SENSORLESS
+        stepperE5.velocity_threshold(CAT(TERN(E5_SENSORLESS, E5, E0), _VELOCITY_THRESHOLD));
+      #endif
+      #if E6_SENSORLESS
+        stepperE6.velocity_threshold(CAT(TERN(E6_SENSORLESS, E6, E0), _VELOCITY_THRESHOLD));
+      #endif
+      #if E7_SENSORLESS
+        stepperE7.velocity_threshold(CAT(TERN(E7_SENSORLESS, E7, E0), _VELOCITY_THRESHOLD));
+      #endif
+    #endif // E0_SENSORLESS
+  #endif // USE_COLLISION_DETECTION
 
   #ifdef TMC_ADV
     TMC_ADV()

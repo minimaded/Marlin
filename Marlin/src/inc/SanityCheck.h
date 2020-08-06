@@ -2515,6 +2515,11 @@ static_assert(hbm[Z_AXIS] >= 0, "HOMING_BUMP_MM.Z must be greater than or equal 
   #error "CoreYZ requires both Y and Z to use sensorless homing if either one does."
 #endif
 
+// Collision detection can not be used if using Sensorless homing
+#if ((ENABLED(SENSORLESS_PROBING) || ENABLED(SENSORLESS_HOMING)) && USE_COLLISION_DETECTION)
+    #error "Collision detection can not be used if using Sensorless homing."
+#endif
+
 // Other TMC feature requirements
 #if ENABLED(HYBRID_THRESHOLD) && !STEALTHCHOP_ENABLED
   #error "Enable STEALTHCHOP_(XY|Z|E) to use HYBRID_THRESHOLD."

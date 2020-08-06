@@ -494,41 +494,142 @@ namespace ExtUI {
         TERN_(Z2_SENSORLESS, case Z2: return stepperZ2.homing_threshold());
         TERN_(Z3_SENSORLESS, case Z3: return stepperZ3.homing_threshold());
         TERN_(Z4_SENSORLESS, case Z4: return stepperZ4.homing_threshold());
+        TERN_(E0_SENSORLESS, case E0: return stepperE0.homing_threshold());
+        TERN_(E1_SENSORLESS, case E1: return stepperE1.homing_threshold());
+        TERN_(E2_SENSORLESS, case E2: return stepperE2.homing_threshold());
+        TERN_(E3_SENSORLESS, case E3: return stepperE3.homing_threshold());
+        TERN_(E4_SENSORLESS, case E4: return stepperE4.homing_threshold());
+        TERN_(E5_SENSORLESS, case E5: return stepperE5.homing_threshold());
+        TERN_(E6_SENSORLESS, case E6: return stepperE6.homing_threshold());
+        TERN_(E7_SENSORLESS, case E7: return stepperE7.homing_threshold());
         default: return 0;
       }
     }
 
     void setTMCBumpSensitivity(const float value, const axis_t axis) {
       switch (axis) {
-        #if X_SENSORLESS || Y_SENSORLESS || Z_SENSORLESS
-          #if X_SENSORLESS
-            case X:  stepperX.homing_threshold(value);  break;
-          #endif
-          #if X2_SENSORLESS
-            case X2: stepperX2.homing_threshold(value); break;
-          #endif
-          #if Y_SENSORLESS
-            case Y: stepperY.homing_threshold(value); break;
-          #endif
-          #if Y2_SENSORLESS
-            case Y2: stepperY2.homing_threshold(value); break;
-          #endif
-          #if Z_SENSORLESS
-            case Z: stepperZ.homing_threshold(value); break;
-          #endif
-          #if Z2_SENSORLESS
-            case Z2: stepperZ2.homing_threshold(value); break;
-          #endif
-          #if Z3_SENSORLESS
-            case Z3: stepperZ3.homing_threshold(value); break;
-          #endif
-          #if Z4_SENSORLESS
-            case Z4: stepperZ4.homing_threshold(value); break;
-          #endif
-        #else
-          UNUSED(value);
+        #if X_SENSORLESS
+          case X:  stepperX.homing_threshold(value);  break;
         #endif
-        default: break;
+        #if X2_SENSORLESS
+          case X2: stepperX2.homing_threshold(value); break;
+        #endif
+        #if Y_SENSORLESS
+          case Y: stepperY.homing_threshold(value); break;
+        #endif
+        #if Y2_SENSORLESS
+          case Y2: stepperY2.homing_threshold(value); break;
+        #endif
+        #if Z_SENSORLESS
+          case Z: stepperZ.homing_threshold(value); break;
+        #endif
+        #if Z2_SENSORLESS
+          case Z2: stepperZ2.homing_threshold(value); break;
+        #endif
+        #if Z3_SENSORLESS
+          case Z3: stepperZ3.homing_threshold(value); break;
+        #endif
+        #if Z4_SENSORLESS
+          case Z4: stepperZ4.homing_threshold(value); break;
+        #endif
+        #if E0_SENSORLESS
+          case E0:  stepperE0.homing_threshold(value);  break;
+        #endif
+        #if E1_SENSORLESS
+          case E1:  stepperE1.homing_threshold(value);  break;
+        #endif
+        #if E2_SENSORLESS
+          case E2:  stepperE2.homing_threshold(value);  break;
+        #endif
+        #if E3_SENSORLESS
+          case E3:  stepperE3.homing_threshold(value);  break;
+        #endif
+        #if E4_SENSORLESS
+          case E4:  stepperE4.homing_threshold(value);  break;
+        #endif
+        #if E5_SENSORLESS
+          case E5:  stepperE5.homing_threshold(value);  break;
+        #endif
+        #if E6_SENSORLESS
+          case E6:  stepperE6.homing_threshold(value);  break;
+        #endif
+        #if E7_SENSORLESS
+          case E7:  stepperE7.homing_threshold(value);  break;
+        #endif
+      default: break;
+      }
+    }
+  
+    int getTMCVelocityThreshold(const axis_t axis) {
+        #if USE_COLLISION_DETECTION
+        switch (axis) {
+            TERN_(X_SENSORLESS,  case X:  return stepperX.velocity_threshold());
+            TERN_(Y_SENSORLESS,  case Y:  return stepperY.velocity_threshold());
+            TERN_(Z_SENSORLESS,  case Z:  return stepperZ.velocity_threshold());
+            TERN_(E0_SENSORLESS, case E0:  return stepperE0.velocity_threshold());
+            TERN_(E1_SENSORLESS, case E1:  return stepperE1.velocity_threshold());
+            TERN_(E2_SENSORLESS, case E2:  return stepperE2.velocity_threshold());
+            TERN_(E3_SENSORLESS, case E3:  return stepperE3.velocity_threshold());
+            TERN_(E4_SENSORLESS, case E4:  return stepperE4.velocity_threshold());
+            TERN_(E5_SENSORLESS, case E5:  return stepperE5.velocity_threshold());
+            TERN_(E6_SENSORLESS, case E6:  return stepperE6.velocity_threshold());
+            TERN_(E7_SENSORLESS, case E7:  return stepperE7.velocity_threshold());
+            default: return 0;
+        }
+        #endif
+    }
+
+    void setTMCVelocityThreshold(const uint16_t value, const axis_t axis) {
+      switch (axis) {
+        #if X_SENSORLESS
+          case X:  stepperX.velocity_threshold(value);  break;
+        #endif
+        #if X2_SENSORLESS
+          case X2: stepperX2.velocity_threshold(value); break;
+        #endif
+        #if Y_SENSORLESS
+          case Y: stepperY.velocity_threshold(value); break;
+        #endif
+        #if Y2_SENSORLESS
+          case Y2: stepperY2.velocity_threshold(value); break;
+        #endif
+        #if Z_SENSORLESS
+          case Z: stepperZ.velocity_threshold(value); break;
+        #endif
+        #if Z2_SENSORLESS
+          case Z2: stepperZ2.velocity_threshold(value); break;
+        #endif
+        #if Z3_SENSORLESS
+          case Z3: stepperZ3.velocity_threshold(value); break;
+        #endif
+        #if Z4_SENSORLESS
+          case Z4: stepperZ4.velocity_threshold(value); break;
+        #endif
+        #if E0_SENSORLESS
+          case E0:  stepperE0.velocity_threshold(value);  break;
+        #endif
+        #if E1_SENSORLESS
+          case E1:  stepperE1.velocity_threshold(value);  break;
+        #endif
+        #if E2_SENSORLESS
+          case E2:  stepperE2.velocity_threshold(value);  break;
+        #endif
+        #if E3_SENSORLESS
+          case E3:  stepperE3.velocity_threshold(value);  break;
+        #endif
+        #if E4_SENSORLESS
+          case E4:  stepperE4.velocity_threshold(value);  break;
+        #endif
+        #if E5_SENSORLESS
+          case E5:  stepperE5.velocity_threshold(value);  break;
+        #endif
+        #if E6_SENSORLESS
+          case E6:  stepperE6.velocity_threshold(value);  break;
+        #endif
+        #if E7_SENSORLESS
+          case E7:  stepperE7.velocity_threshold(value);  break;
+        #endif
+      default: break;
       }
     }
   #endif

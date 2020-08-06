@@ -261,6 +261,7 @@
  * M912 - Clear stepper driver overtemperature pre-warn condition flag. (Requires at least one _DRIVER_TYPE defined as TMC2130/2160/5130/5160/2208/2209/2660)
  * M913 - Set HYBRID_THRESHOLD speed. (Requires HYBRID_THRESHOLD)
  * M914 - Set StallGuard sensitivity. (Requires SENSORLESS_HOMING or SENSORLESS_PROBING)
+ * M915 - Set StallGuard feedrate threshold. (COLLISION_DETECTION)
  * M916 - L6470 tuning: Increase KVAL_HOLD until thermal warning. (Requires at least one _DRIVER_TYPE L6470)
  * M917 - L6470 tuning: Find minimum current thresholds. (Requires at least one _DRIVER_TYPE L6470)
  * M918 - L6470 tuning: Increase speed until max or error. (Requires at least one _DRIVER_TYPE L6470)
@@ -818,7 +819,13 @@ private:
       static void M912();
     #endif
     TERN_(HYBRID_THRESHOLD, static void M913());
-    TERN_(USE_SENSORLESS, static void M914());
+    #if USE_SENSORLESS
+      TERN_(USE_SENSORLESS, static void M914());
+    #endif
+    #if USE_COLLISION_DETECTION &! USE_SENSORLESS
+      TERN_(USE_COLLISION_DETECTION, static void M914());
+      TERN_(USE_COLLISION_DETECTION, static void M915());
+    #endif
   #endif
 
   #if HAS_L64XX

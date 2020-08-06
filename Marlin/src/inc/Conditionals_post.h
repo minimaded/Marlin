@@ -1562,6 +1562,9 @@
   #if EITHER(SENSORLESS_HOMING, SENSORLESS_PROBING)
     #define USE_SENSORLESS 1
   #endif
+  #if ENABLED(COLLISION_DETECTION)
+    #define USE_COLLISION_DETECTION 1
+  #endif
   // Disable Z axis sensorless homing if a probe is used to home the Z axis
   #if HOMING_Z_WITH_PROBE
     #undef Z_STALL_SENSITIVITY
@@ -1592,6 +1595,30 @@
   #endif
   #if defined(Z4_STALL_SENSITIVITY) && AXIS_HAS_STALLGUARD(Z4)
     #define Z4_SENSORLESS 1
+  #endif
+   #if defined(E0_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E0)
+    #define E0_SENSORLESS 1
+  #endif
+  #if defined(E1_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E1)
+    #define E1_SENSORLESS 1
+  #endif
+  #if defined(E2_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E2)
+    #define E2_SENSORLESS 1
+  #endif
+  #if defined(E3_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E3)
+    #define E3_SENSORLESS 1
+  #endif
+  #if defined(E4_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E4)
+    #define E4_SENSORLESS 1
+  #endif
+  #if defined(E5_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E5)
+    #define E5_SENSORLESS 1
+  #endif
+  #if defined(E6_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E6)
+    #define E6_SENSORLESS 1
+  #endif
+  #if defined(E7_STALL_SENSITIVITY)  && AXIS_HAS_STALLGUARD(E7)
+    #define E7_SENSORLESS 1
   #endif
   #if ENABLED(SPI_ENDSTOPS)
     #define X_SPI_SENSORLESS X_SENSORLESS

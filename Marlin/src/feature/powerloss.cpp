@@ -98,7 +98,7 @@ void PrintJobRecovery::enable(const bool onoff) {
 void PrintJobRecovery::changed() {
   if (!enabled)
     purge();
-  else if (IS_SD_PRINTING())
+  else if (printingIsActive() || printingIsPaused())
     save(true);
 }
 
@@ -176,7 +176,7 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=0*/
 
     // Set Head and Foot to matching non-zero values
     if (!++info.valid_head) ++info.valid_head; // non-zero in sequence
-    //if (!IS_SD_PRINTING()) info.valid_head = 0;
+    //if (!printingIsActive() || printingIsPaused()) info.valid_head = 0;
     info.valid_foot = info.valid_head;
 
     // Machine state
@@ -286,7 +286,7 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=0*/
     #endif
 
     // Save, including the limited Z raise
-    if (IS_SD_PRINTING()) save(true, zraise);
+    if (printingIsActive() || printingIsPaused()) save(true, zraise);
 
     // Disable all heaters to reduce power loss
     thermalManager.disable_all_heaters();
@@ -295,7 +295,7 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=0*/
       // Do a hard-stop of the steppers (with possibly a loud thud)
       quickstop_stepper();
       // With backup power a retract and raise can be done now
-      retract_and_lift(zraise);
+      if  (printingIsActive() || printingIsPaused()) retract_and_lift(zraise);
     #endif
 
     kill(GET_TEXT(MSG_OUTAGE_RECOVERY));

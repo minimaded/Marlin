@@ -292,6 +292,14 @@
 #define STR_Z2 "Z2"
 #define STR_Z3 "Z3"
 #define STR_Z4 "Z4"
+#define STR_E0 "E0"
+#define STR_E1 "E1"
+#define STR_E2 "E2"
+#define STR_E3 "E3"
+#define STR_E4 "E4"
+#define STR_E5 "E5"
+#define STR_E6 "E6"
+#define STR_E7 "E7"
 
 #define LCD_STR_A STR_A
 #define LCD_STR_B STR_B

@@ -148,7 +148,8 @@
 
 typedef struct { uint16_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_stepper_current_t;
 typedef struct { uint32_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_hybrid_threshold_t;
-typedef struct {  int16_t X, Y, Z, X2, Y2, Z2, Z3, Z4;                                 } tmc_sgt_t;
+typedef struct {  int16_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_sgt_t;
+typedef struct { uint32_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_sgv_t;
 typedef struct {     bool X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_stealth_enabled_t;
 
 // Limit an index to an array size
@@ -346,10 +347,11 @@ typedef struct SettingsDataStruct {
   //
   // HAS_TRINAMIC_CONFIG
   //
-  tmc_stepper_current_t tmc_stepper_current;            // M906 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5
-  tmc_hybrid_threshold_t tmc_hybrid_threshold;          // M913 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5
-  tmc_sgt_t tmc_sgt;                                    // M914 X Y Z X2 Y2 Z2 Z3 Z4
-  tmc_stealth_enabled_t tmc_stealth_enabled;            // M569 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5
+  tmc_stepper_current_t tmc_stepper_current;            // M906 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_hybrid_threshold_t tmc_hybrid_threshold;          // M913 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_sgt_t tmc_sgt;                                    // M914 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_sgv_t tmc_sgv;                                    // M915 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_stealth_enabled_t tmc_stealth_enabled;            // M569 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
 
   //
   // LIN_ADVANCE
@@ -1147,7 +1149,7 @@ void MarlinSettings::postprocess() {
     //
     {
       tmc_sgt_t tmc_sgt{0};
-      #if USE_SENSORLESS
+      #if USE_SENSORLESS || USE_COLLISION_DETECTION
         TERN_(X_SENSORLESS,  tmc_sgt.X  = stepperX.homing_threshold());
         TERN_(X2_SENSORLESS, tmc_sgt.X2 = stepperX2.homing_threshold());
         TERN_(Y_SENSORLESS,  tmc_sgt.Y  = stepperY.homing_threshold());
@@ -1156,9 +1158,44 @@ void MarlinSettings::postprocess() {
         TERN_(Z2_SENSORLESS, tmc_sgt.Z2 = stepperZ2.homing_threshold());
         TERN_(Z3_SENSORLESS, tmc_sgt.Z3 = stepperZ3.homing_threshold());
         TERN_(Z4_SENSORLESS, tmc_sgt.Z4 = stepperZ4.homing_threshold());
+        TERN_(E0_SENSORLESS, tmc_sgt.E0 = stepperE0.homing_threshold());
+        TERN_(E1_SENSORLESS, tmc_sgt.E0 = stepperE1.homing_threshold());
+        TERN_(E2_SENSORLESS, tmc_sgt.E0 = stepperE2.homing_threshold());
+        TERN_(E3_SENSORLESS, tmc_sgt.E0 = stepperE3.homing_threshold());
+        TERN_(E4_SENSORLESS, tmc_sgt.E0 = stepperE4.homing_threshold());
+        TERN_(E5_SENSORLESS, tmc_sgt.E0 = stepperE5.homing_threshold());
+        TERN_(E6_SENSORLESS, tmc_sgt.E0 = stepperE6.homing_threshold());
+        TERN_(E7_SENSORLESS, tmc_sgt.E0 = stepperE7.homing_threshold());
       #endif
       EEPROM_WRITE(tmc_sgt);
     }
+
+    //
+    // TMC StallGuard velocity threshold
+    //
+    {
+      tmc_sgv_t tmc_sgv{0};
+      #if USE_COLLISION_DETECTION
+        TERN_(X_SENSORLESS,  tmc_sgv.X  = stepperX.stored.velocity_thrs);
+        TERN_(X2_SENSORLESS, tmc_sgv.X2 = stepperX2.stored.velocity_thrs);
+        TERN_(Y_SENSORLESS,  tmc_sgv.Y  = stepperY.stored.velocity_thrs);
+        TERN_(Y2_SENSORLESS, tmc_sgv.Y2 = stepperY2.stored.velocity_thrs);
+        TERN_(Z_SENSORLESS,  tmc_sgv.Z  = stepperZ.stored.velocity_thrs);
+        TERN_(Z2_SENSORLESS, tmc_sgv.Z2 = stepperZ2.stored.velocity_thrs);
+        TERN_(Z3_SENSORLESS, tmc_sgv.Z3 = stepperZ3.stored.velocity_thrs);
+        TERN_(Z4_SENSORLESS, tmc_sgv.Z4 = stepperZ4.stored.velocity_thrs);
+        TERN_(E0_SENSORLESS, tmc_sgv.E0 = stepperE0.stored.velocity_thrs);
+        TERN_(E1_SENSORLESS, tmc_sgv.E0 = stepperE1.stored.velocity_thrs);
+        TERN_(E2_SENSORLESS, tmc_sgv.E0 = stepperE2.stored.velocity_thrs);
+        TERN_(E3_SENSORLESS, tmc_sgv.E0 = stepperE3.stored.velocity_thrs);
+        TERN_(E4_SENSORLESS, tmc_sgv.E0 = stepperE4.stored.velocity_thrs);
+        TERN_(E5_SENSORLESS, tmc_sgv.E0 = stepperE5.stored.velocity_thrs);
+        TERN_(E6_SENSORLESS, tmc_sgv.E0 = stepperE6.stored.velocity_thrs);
+        TERN_(E7_SENSORLESS, tmc_sgv.E0 = stepperE7.stored.velocity_thrs);
+      #endif
+      EEPROM_WRITE(tmc_sgv);
+    }
+
 
     //
     // TMC stepping mode
@@ -1986,7 +2023,7 @@ void MarlinSettings::postprocess() {
         tmc_sgt_t tmc_sgt;
         _FIELD_TEST(tmc_sgt);
         EEPROM_READ(tmc_sgt);
-        #if USE_SENSORLESS
+        #if USE_SENSORLESS || USE_COLLISION_DETECTION
           if (!validating) {
             TERN_(X_SENSORLESS,  stepperX.homing_threshold(tmc_sgt.X));
             TERN_(X2_SENSORLESS, stepperX2.homing_threshold(tmc_sgt.X2));
@@ -1996,6 +2033,43 @@ void MarlinSettings::postprocess() {
             TERN_(Z2_SENSORLESS, stepperZ2.homing_threshold(tmc_sgt.Z2));
             TERN_(Z3_SENSORLESS, stepperZ3.homing_threshold(tmc_sgt.Z3));
             TERN_(Z4_SENSORLESS, stepperZ4.homing_threshold(tmc_sgt.Z4));
+            TERN_(E0_SENSORLESS, stepperE0.homing_threshold(tmc_sgt.E0));
+            TERN_(E1_SENSORLESS, stepperE1.homing_threshold(tmc_sgt.E1));
+            TERN_(E2_SENSORLESS, stepperE2.homing_threshold(tmc_sgt.E2));
+            TERN_(E3_SENSORLESS, stepperE3.homing_threshold(tmc_sgt.E3));
+            TERN_(E4_SENSORLESS, stepperE4.homing_threshold(tmc_sgt.E4));
+            TERN_(E5_SENSORLESS, stepperE5.homing_threshold(tmc_sgt.E5));
+            TERN_(E6_SENSORLESS, stepperE6.homing_threshold(tmc_sgt.E6));
+            TERN_(E7_SENSORLESS, stepperE7.homing_threshold(tmc_sgt.E7));
+          }
+        #endif
+      }
+      
+      //
+      // TMC StallGuard velocity threshold.
+      //
+      {
+        tmc_sgv_t tmc_sgv;
+        _FIELD_TEST(tmc_sgv_t);
+        EEPROM_READ(tmc_sgv);
+        #if USE_COLLISION_DETECTION
+          if (!validating) {
+            TERN_(X_SENSORLESS,  stepperX.velocity_threshold(tmc_sgv.X));
+            TERN_(X2_SENSORLESS, stepperX2.velocity_threshold(tmc_sgv.X2));
+            TERN_(Y_SENSORLESS,  stepperY.velocity_threshold(tmc_sgv.Y));
+            TERN_(Y2_SENSORLESS, stepperY2.velocity_threshold(tmc_sgv.Y2));
+            TERN_(Z_SENSORLESS,  stepperZ.velocity_threshold(tmc_sgv.Z));
+            TERN_(Z2_SENSORLESS, stepperZ2.velocity_threshold(tmc_sgv.Z2));
+            TERN_(Z3_SENSORLESS, stepperZ3.velocity_threshold(tmc_sgv.Z3));
+            TERN_(Z4_SENSORLESS, stepperZ4.velocity_threshold(tmc_sgv.Z4));
+            TERN_(E0_SENSORLESS, stepperE0.velocity_threshold(tmc_sgv.E0));
+            TERN_(E1_SENSORLESS, stepperE1.velocity_threshold(tmc_sgv.E1));
+            TERN_(E2_SENSORLESS, stepperE2.velocity_threshold(tmc_sgv.E2));
+            TERN_(E3_SENSORLESS, stepperE3.velocity_threshold(tmc_sgv.E3));
+            TERN_(E4_SENSORLESS, stepperE4.velocity_threshold(tmc_sgv.E4));
+            TERN_(E5_SENSORLESS, stepperE5.velocity_threshold(tmc_sgv.E5));
+            TERN_(E6_SENSORLESS, stepperE6.velocity_threshold(tmc_sgv.E6));
+            TERN_(E7_SENSORLESS, stepperE7.velocity_threshold(tmc_sgv.E7));
           }
         #endif
       }
@@ -2823,8 +2897,11 @@ void MarlinSettings::reset() {
     #if ENABLED(HYBRID_THRESHOLD)
       inline void say_M913(const bool forReplay) { CONFIG_ECHO_START(); SERIAL_ECHOPGM("  M913"); }
     #endif
-    #if USE_SENSORLESS
+    #if USE_SENSORLESS || USE_COLLISION_DETECTION
       inline void say_M914() { SERIAL_ECHOPGM("  M914"); }
+    #endif
+    #if USE_COLLISION_DETECTION
+    inline void say_M915() { SERIAL_ECHOPGM("  M915"); }
     #endif
   #endif
 
@@ -3495,7 +3572,7 @@ void MarlinSettings::reset() {
       /**
        * TMC Sensorless homing thresholds
        */
-      #if USE_SENSORLESS
+      #if USE_SENSORLESS || USE_COLLISION_DETECTION
         CONFIG_ECHO_HEADING("StallGuard threshold:");
         #if X_SENSORLESS || Y_SENSORLESS || Z_SENSORLESS
           CONFIG_ECHO_START();
@@ -3539,6 +3616,140 @@ void MarlinSettings::reset() {
           say_M914();
           SERIAL_ECHOLNPAIR(" I3 Z", stepperZ4.homing_threshold());
         #endif
+        
+        #if E0_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T0 E", stepperE0.homing_threshold());
+        #endif
+        #if E1_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T1 E", stepperE1.homing_threshold());
+        #endif
+        #if E2_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T2 E", stepperE2.homing_threshold());
+        #endif
+        #if E3_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T3 E", stepperE3.homing_threshold());
+        #endif
+        #if E4_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T4 E", stepperE4.homing_threshold());
+        #endif
+        #if E5_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T5 E", stepperE5.homing_threshold());
+        #endif
+        #if E6_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T6 E", stepperE6.homing_threshold());
+        #endif
+        #if E7_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T7 E", stepperE7.homing_threshold());
+        #endif
+        SERIAL_EOL();
+
+      #endif // USE_SENSORLESS || USE_COLLISION_DETECTION
+      
+      /**
+       * TMC Stallguard velocity thresholds
+       */
+      #if USE_COLLISION_DETECTION
+        CONFIG_ECHO_HEADING("StallGuard velocity threshold:");
+        #if X_SENSORLESS || Y_SENSORLESS || Z_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          #if X_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_X_STR, stepperX.stored.velocity_thrs);
+          #endif
+          #if Y_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Y_STR, stepperY.stored.velocity_thrs);
+          #endif
+          #if Z_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Z_STR, stepperZ.stored.velocity_thrs);
+          #endif
+          SERIAL_EOL();
+        #endif
+
+        #if X2_SENSORLESS || Y2_SENSORLESS || Z2_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOPGM(" I1");
+          #if X2_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_X_STR, stepperX2.stored.velocity_thrs);
+          #endif
+          #if Y2_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Y_STR, stepperY2.stored.velocity_thrs);
+          #endif
+          #if Z2_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Z_STR, stepperZ2.stored.velocity_thrs);
+          #endif
+          SERIAL_EOL();
+        #endif
+
+        #if Z3_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" I2 Z", stepperZ3.stored.velocity_thrs);
+        #endif
+
+        #if Z4_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" I3 Z", stepperZ4.stored.velocity_thrs);
+        #endif
+        
+        #if E0_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T0 E", stepperE0.stored.velocity_thrs);
+        #endif
+        #if E1_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T1 E", stepperE1.stored.velocity_thrs);
+        #endif
+        #if E2_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T2 E", stepperE2.stored.velocity_thrs);
+        #endif
+        #if E3_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T3 E", stepperE3.stored.velocity_thrs);
+        #endif
+        #if E4_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T4 E", stepperE4.stored.velocity_thrs);
+        #endif
+        #if E5_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T5 E", stepperE5.stored.velocity_thrs);
+        #endif
+        #if E6_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T6 E", stepperE6.stored.velocity_thrs);
+        #endif
+        #if E7_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T7 E", stepperE7.stored.velocity_thrs);
+        #endif
+        SERIAL_EOL();
 
       #endif // USE_SENSORLESS
 

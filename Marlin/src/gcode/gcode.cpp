@@ -824,8 +824,11 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
         #if ENABLED(HYBRID_THRESHOLD)
           case 913: M913(); break;                                // M913: Set HYBRID_THRESHOLD speed.
         #endif
-        #if USE_SENSORLESS
+        #if USE_SENSORLESS || USE_COLLISION_DETECTION
           case 914: M914(); break;                                // M914: Set StallGuard sensitivity.
+        #endif
+        #if USE_COLLISION_DETECTION
+          case 915: M915(); break;                                // M915: Set StallGuard feedrate threshold.
         #endif
       #endif
 

@@ -72,7 +72,13 @@ class TMCStorage {
     struct {
       TERN_(HAS_STEALTHCHOP, bool stealthChop_enabled = false);
       TERN_(HYBRID_THRESHOLD, uint8_t hybrid_thrs = 0);
+      #if USE_SENSORLESS
       TERN_(USE_SENSORLESS, int16_t homing_thrs = 0);
+      #endif
+      #if USE_COLLISION_DETECTION &! USE_SENSORLESS
+      TERN_(USE_COLLISION_DETECTION, int16_t homing_thrs = 0);
+      TERN_(USE_COLLISION_DETECTION, uint16_t velocity_thrs = 0);
+      #endif
     } stored;
 };
 
@@ -227,7 +233,7 @@ class TMCMarlin<TMC2209Stepper, AXIS_LETTER, DRIVER_ID, AXIS_ID> : public TMC220
         TERN_(HAS_LCD_MENU, this->stored.hybrid_thrs = thrs);
       }
     #endif
-    #if USE_SENSORLESS
+    #if USE_SENSORLESS || USE_COLLISION_DETECTION
       inline int16_t homing_threshold() { return TMC2209Stepper::SGTHRS(); }
       void homing_threshold(int16_t sgt_val) {
         sgt_val = (int16_t)constrain(sgt_val, sgt_min, sgt_max);
@@ -235,15 +241,29 @@ class TMCMarlin<TMC2209Stepper, AXIS_LETTER, DRIVER_ID, AXIS_ID> : public TMC220
         TERN_(HAS_LCD_MENU, this->stored.homing_thrs = sgt_val);
       }
     #endif
-
+    
+    #if USE_COLLISION_DETECTION
+      inline uint32_t velocity_threshold() { return TMC2209Stepper::TCOOLTHRS(); }
+      void velocity_threshold(uint16_t sgv_val) {
+        uint32_t sgv_raw = (uint32_t)constrain(sgv_val, 0, 10000);
+        if (sgv_raw < 1) { sgv_raw = 0xFFFFF; }
+        else { sgv_raw = (128 * planner.settings.axis_steps_per_mm[AXIS_ID]) / sgv_val; }
+        TMC2209Stepper::TCOOLTHRS(sgv_raw);
+        TERN_(HAS_LCD_MENU, this->stored.velocity_thrs = sgv_val);
+      }
+    #endif
+    
     #if HAS_LCD_MENU
       inline void refresh_stepper_current() { rms_current(this->val_mA); }
 
       #if ENABLED(HYBRID_THRESHOLD)
         inline void refresh_hybrid_thrs() { set_pwm_thrs(this->stored.hybrid_thrs); }
       #endif
-      #if USE_SENSORLESS
+      #if USE_SENSORLESS || USE_COLLISION_DETECTION
         inline void refresh_homing_thrs() { homing_threshold(this->stored.homing_thrs); }
+      #endif
+      #if USE_COLLISION_DETECTION
+        inline void refresh_velocity_thrs() { velocity_threshold(this->stored.velocity_thrs); }
       #endif
     #endif
 
@@ -316,12 +336,22 @@ void tmc_print_current(TMC &st) {
     SERIAL_ECHOLNPAIR(" stealthChop max speed: ", st.get_pwm_thrs());
   }
 #endif
-#if USE_SENSORLESS
+#if USE_SENSORLESS || USE_COLLISION_DETECTION
   template<typename TMC>
   void tmc_print_sgt(TMC &st) {
     st.printLabel();
     SERIAL_ECHOPGM(" homing sensitivity: ");
     SERIAL_PRINTLN(st.homing_threshold(), DEC);
+  }
+#endif
+#if USE_COLLISION_DETECTION
+  template<typename TMC>
+  void tmc_print_sgv(TMC &st) {
+    st.printLabel();
+    SERIAL_ECHOPGM(" stallguard velocity: ");
+    SERIAL_ECHO(st.stored.velocity_thrs);
+    SERIAL_ECHOPGM(", raw: ");
+    SERIAL_PRINTLN(st.velocity_threshold(), DEC);
   }
 #endif
 

@@ -621,6 +621,8 @@ namespace Language_en {
   PROGMEM Language_Str MSG_TMC_CURRENT                     = _UxGT("Driver Current");
   PROGMEM Language_Str MSG_TMC_HYBRID_THRS                 = _UxGT("Hybrid Threshold");
   PROGMEM Language_Str MSG_TMC_HOMING_THRS                 = _UxGT("Sensorless Homing");
+  PROGMEM Language_Str MSG_TMC_STALL_THRS                  = _UxGT("CD Threshold");
+  PROGMEM Language_Str MSG_TMC_VELOCITY_THRS               = _UxGT("CDV Threshold");
   PROGMEM Language_Str MSG_TMC_STEPPING_MODE               = _UxGT("Stepping Mode");
   PROGMEM Language_Str MSG_TMC_STEALTH_ENABLED             = _UxGT("StealthChop Enabled");
   PROGMEM Language_Str MSG_SERVICE_RESET                   = _UxGT("Reset");

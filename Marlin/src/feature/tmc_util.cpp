@@ -488,6 +488,7 @@
     TMC_STEALTHCHOP,
     TMC_MICROSTEPS,
     TMC_TSTEP,
+    TMC_TCOOLTHRS,
     TMC_TPWMTHRS,
     TMC_TPWMTHRS_MMS,
     TMC_OTPW,
@@ -613,6 +614,10 @@
         switch (i) {
           case TMC_SGT:       SERIAL_PRINT(st.SGTHRS(), DEC); break;
           case TMC_UART_ADDR: SERIAL_PRINT(st.get_address(), DEC); break;
+          case TMC_TCOOLTHRS: { 
+        const uint32_t tcoolthrs_value = st.TCOOLTHRS(); 
+            if (tcoolthrs_value != 0xFFFFF) SERIAL_ECHO(tcoolthrs_value); else SERIAL_ECHOPGM("max"); 
+      } break;
           default:
             TMC2208Stepper *parent = &st;
             _tmc_status(*parent, i);
@@ -903,6 +908,9 @@
     TMC_REPORT("stealthChop",        TMC_STEALTHCHOP);
     TMC_REPORT("msteps\t",           TMC_MICROSTEPS);
     TMC_REPORT("tstep\t",            TMC_TSTEP);
+    #if HAS_DRIVER(TMC2209) 
+      TMC_REPORT("tcoolthrs\t",      TMC_TCOOLTHRS); 
+    #endif
     TMC_REPORT("PWM thresh.",        TMC_TPWMTHRS);
     TMC_REPORT("[mm/s]\t",           TMC_TPWMTHRS_MMS);
     TMC_REPORT("OT prewarn",         TMC_OTPW);
@@ -962,8 +970,19 @@
       }
     }
   #endif
-  #if HAS_TMC220x
+  
+  #if HAS_DRIVER(TMC2208)  
     static void tmc_get_ic_registers(TMC2208Stepper, const TMC_get_registers_enum) { SERIAL_CHAR('\t'); }
+  #endif 
+   
+  #if HAS_DRIVER(TMC2209) 
+    static void tmc_get_ic_registers(TMC2209Stepper &st, const TMC_get_registers_enum i) { 
+      switch (i) { 
+        PRINT_TMC_REGISTER(TCOOLTHRS); 
+        PRINT_TMC_REGISTER(COOLCONF); 
+      default: SERIAL_CHAR('\t'); break; 
+  } 
+}
   #endif
 
   #if HAS_TRINAMIC_CONFIG
