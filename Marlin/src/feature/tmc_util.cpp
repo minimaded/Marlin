@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -480,14 +480,11 @@
     TMC_GLOBAL_SCALER,
     TMC_CS_ACTUAL,
     TMC_PWM_SCALE,
-    TMC_PWM_SCALE_SUM,
-    TMC_PWM_SCALE_AUTO,
-    TMC_PWM_OFS_AUTO,
-    TMC_PWM_GRAD_AUTO,
     TMC_VSENSE,
     TMC_STEALTHCHOP,
     TMC_MICROSTEPS,
     TMC_TSTEP,
+    TMC_TCOOLTHRS,
     TMC_TPWMTHRS,
     TMC_TPWMTHRS_MMS,
     TMC_OTPW,
@@ -496,8 +493,7 @@
     TMC_TBL,
     TMC_HEND,
     TMC_HSTRT,
-    TMC_SGT,
-    TMC_MSCNT
+    TMC_SGT
   };
   enum TMC_drv_status_enum : char {
     TMC_DRV_CODES,
@@ -596,10 +592,7 @@
   #if HAS_TMC220x
     static void _tmc_status(TMC2208Stepper &st, const TMC_debug_enum i) {
       switch (i) {
-        case TMC_PWM_SCALE_SUM: SERIAL_PRINT(st.pwm_scale_sum(), DEC); break;
-        case TMC_PWM_SCALE_AUTO: SERIAL_PRINT(st.pwm_scale_auto(), DEC); break;
-        case TMC_PWM_OFS_AUTO: SERIAL_PRINT(st.pwm_ofs_auto(), DEC); break;
-        case TMC_PWM_GRAD_AUTO: SERIAL_PRINT(st.pwm_grad_auto(), DEC); break;
+        case TMC_PWM_SCALE: SERIAL_PRINT(st.pwm_scale_sum(), DEC); break;
         case TMC_STEALTHCHOP: serialprint_truefalse(st.stealth()); break;
         case TMC_S2VSA: if (st.s2vsa()) SERIAL_CHAR('*'); break;
         case TMC_S2VSB: if (st.s2vsb()) SERIAL_CHAR('*'); break;
@@ -613,6 +606,10 @@
         switch (i) {
           case TMC_SGT:       SERIAL_PRINT(st.SGTHRS(), DEC); break;
           case TMC_UART_ADDR: SERIAL_PRINT(st.get_address(), DEC); break;
+          case TMC_TCOOLTHRS: {
+            const uint32_t tcoolthrs_value = st.TCOOLTHRS();
+            if (tcoolthrs_value != 0xFFFFF) SERIAL_ECHO(tcoolthrs_value); else SERIAL_ECHOPGM("max");
+          } break;
           default:
             TMC2208Stepper *parent = &st;
             _tmc_status(*parent, i);
@@ -688,7 +685,6 @@
       case TMC_TBL: SERIAL_PRINT(st.blank_time(), DEC); break;
       case TMC_HEND: SERIAL_PRINT(st.hysteresis_end(), DEC); break;
       case TMC_HSTRT: SERIAL_PRINT(st.hysteresis_start(), DEC); break;
-      case TMC_MSCNT: SERIAL_PRINT(st.get_microstep_counter(), DEC); break;
       default: _tmc_status(st, i); break;
     }
   }
@@ -903,26 +899,20 @@
     TMC_REPORT("stealthChop",        TMC_STEALTHCHOP);
     TMC_REPORT("msteps\t",           TMC_MICROSTEPS);
     TMC_REPORT("tstep\t",            TMC_TSTEP);
+    #if HAS_DRIVER(TMC2209)
+      TMC_REPORT("tcoolthrs\t",      TMC_TCOOLTHRS);
+    #endif
     TMC_REPORT("PWM thresh.",        TMC_TPWMTHRS);
     TMC_REPORT("[mm/s]\t",           TMC_TPWMTHRS_MMS);
     TMC_REPORT("OT prewarn",         TMC_OTPW);
     #if ENABLED(MONITOR_DRIVER_STATUS)
       TMC_REPORT("triggered\n OTP\t", TMC_OTPW_TRIGGERED);
     #endif
-
-    #if HAS_TMC220x
-      TMC_REPORT("pwm scale sum",     TMC_PWM_SCALE_SUM);
-      TMC_REPORT("pwm scale auto",    TMC_PWM_SCALE_AUTO);
-      TMC_REPORT("pwm offset auto",   TMC_PWM_OFS_AUTO);
-      TMC_REPORT("pwm grad auto",     TMC_PWM_GRAD_AUTO);
-    #endif
-
     TMC_REPORT("off time",           TMC_TOFF);
     TMC_REPORT("blank time",         TMC_TBL);
     TMC_REPORT("hysteresis\n -end\t", TMC_HEND);
     TMC_REPORT(" -start\t",          TMC_HSTRT);
     TMC_REPORT("Stallguard thrs",    TMC_SGT);
-    TMC_REPORT("uStep count",        TMC_MSCNT);
     DRV_REPORT("DRVSTATUS",          TMC_DRV_CODES);
     #if HAS_TMCX1X0 || HAS_TMC220x
       DRV_REPORT("sg_result",        TMC_SG_RESULT);
@@ -962,8 +952,19 @@
       }
     }
   #endif
-  #if HAS_TMC220x
+  
+  #if HAS_DRIVER(TMC2208)
     static void tmc_get_ic_registers(TMC2208Stepper, const TMC_get_registers_enum) { SERIAL_CHAR('\t'); }
+  #endif
+  
+  #if HAS_DRIVER(TMC2209)
+    static void tmc_get_ic_registers(TMC2209Stepper &st, const TMC_get_registers_enum i) {
+      switch (i) {
+        PRINT_TMC_REGISTER(TCOOLTHRS);
+        PRINT_TMC_REGISTER(COOLCONF);
+        default: SERIAL_CHAR('\t'); break;
+      }
+    }
   #endif
 
   #if HAS_TRINAMIC_CONFIG

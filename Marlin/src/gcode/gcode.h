@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #pragma once
@@ -33,7 +33,7 @@
  * Helpful G-code references:
  *  - https://marlinfw.org/meta/gcode
  *  - https://reprap.org/wiki/G-code
- *  - https://linuxcnc.org/docs/html/gcode.html
+ *  - http://linuxcnc.org/docs/html/gcode.html
  *
  * Help to document Marlin's G-codes online:
  *  - https://github.com/MarlinFirmware/MarlinDocumentation
@@ -65,7 +65,6 @@
  * G32  - Undock sled (Z_PROBE_SLED only)
  * G33  - Delta Auto-Calibration (Requires DELTA_AUTO_CALIBRATION)
  * G34  - Z Stepper automatic alignment using probe: I<iterations> T<accuracy> A<amplification> (Requires Z_STEPPER_AUTO_ALIGN)
- * G35  - Read bed corners to help adjust bed screws: T<screw_thread> (Requires ASSISTED_TRAMMING)
  * G38  - Probe in any direction using the Z_MIN_PROBE (Requires G38_PROBE_TARGET)
  * G42  - Coordinated move to a mesh point (Requires MESH_BED_LEVELING, AUTO_BED_LEVELING_BLINEAR, or AUTO_BED_LEVELING_UBL)
  * G60  - Save current position. (Requires SAVED_POSITIONS)
@@ -218,7 +217,6 @@
  * M422 - Set Z Stepper automatic alignment position using probe. X<units> Y<units> A<axis> (Requires Z_STEPPER_AUTO_ALIGN)
  * M425 - Enable/Disable and tune backlash correction. (Requires BACKLASH_COMPENSATION and BACKLASH_GCODE)
  * M428 - Set the home_offset based on the current_position. Nearest edge applies. (Disabled by NO_WORKSPACE_OFFSETS or DELTA)
- * M430 - Read the system current, voltage, and power (Requires POWER_MONITOR_CURRENT, POWER_MONITOR_VOLTAGE, or POWER_MONITOR_FIXED_VOLTAGE)
  * M486 - Identify and cancel objects. (Requires CANCEL_OBJECTS)
  * M500 - Store parameters in EEPROM. (Requires EEPROM_SETTINGS)
  * M501 - Restore parameters from EEPROM. (Requires EEPROM_SETTINGS)
@@ -261,6 +259,7 @@
  * M912 - Clear stepper driver overtemperature pre-warn condition flag. (Requires at least one _DRIVER_TYPE defined as TMC2130/2160/5130/5160/2208/2209/2660)
  * M913 - Set HYBRID_THRESHOLD speed. (Requires HYBRID_THRESHOLD)
  * M914 - Set StallGuard sensitivity. (Requires SENSORLESS_HOMING or SENSORLESS_PROBING)
+ * M915 - Set StallGuard feedrate threshold. (COLLISION_DETECTION)
  * M916 - L6470 tuning: Increase KVAL_HOLD until thermal warning. (Requires at least one _DRIVER_TYPE L6470)
  * M917 - L6470 tuning: Find minimum current thresholds. (Requires at least one _DRIVER_TYPE L6470)
  * M918 - L6470 tuning: Increase speed until max or error. (Requires at least one _DRIVER_TYPE L6470)
@@ -276,7 +275,6 @@
  * ************ Custom codes - This can change to suit future G-code regulations
  * G425 - Calibrate using a conductive object. (Requires CALIBRATION_GCODE)
  * M928 - Start SD logging: "M928 filename.gco". Stop with M29. (Requires SDSUPPORT)
- * M995 - Touch screen calibration for TFT display
  * M997 - Perform in-application firmware update
  * M999 - Restart after being stopped by error
  *
@@ -335,14 +333,8 @@ public:
     static bool select_coordinate_system(const int8_t _new);
   #endif
 
-  static millis_t previous_move_ms, max_inactive_time, stepper_inactive_time;
-  FORCE_INLINE static void reset_stepper_timeout(const millis_t ms=millis()) { previous_move_ms = ms; }
-  FORCE_INLINE static bool stepper_max_timed_out(const millis_t ms=millis()) {
-    return max_inactive_time && ELAPSED(ms, previous_move_ms + max_inactive_time);
-  }
-  FORCE_INLINE static bool stepper_inactive_timeout(const millis_t ms=millis()) {
-    return ELAPSED(ms, previous_move_ms + stepper_inactive_time);
-  }
+  static millis_t previous_move_ms;
+  FORCE_INLINE static void reset_stepper_timeout() { previous_move_ms = millis(); }
 
   static int8_t get_target_extruder_from_command();
   static int8_t get_target_e_stepper_from_command();
@@ -461,8 +453,6 @@ private:
     static void G34();
     static void M422();
   #endif
-
-  TERN_(ASSISTED_TRAMMING, static void G35());
 
   TERN_(G38_PROBE_TARGET, static void G38(const int8_t subcode));
 
@@ -615,7 +605,7 @@ private:
     static void M191();
   #endif
 
-  #if PREHEAT_COUNT
+  #if HAS_HOTEND && HAS_LCD_MENU
     static void M145();
   #endif
 
@@ -746,8 +736,6 @@ private:
 
   TERN_(HAS_M206_COMMAND, static void M428());
 
-  TERN_(HAS_POWER_MONITOR, static void M430());
-
   TERN_(CANCEL_OBJECTS, static void M486());
 
   static void M500();
@@ -818,7 +806,13 @@ private:
       static void M912();
     #endif
     TERN_(HYBRID_THRESHOLD, static void M913());
-    TERN_(USE_SENSORLESS, static void M914());
+    #if USE_SENSORLESS
+      TERN_(USE_SENSORLESS, static void M914());
+    #endif
+    #if USE_COLLISION_DETECTION &! USE_SENSORLESS
+      TERN_(USE_COLLISION_DETECTION, static void M914());
+      TERN_(USE_COLLISION_DETECTION, static void M915());
+    #endif
   #endif
 
   #if HAS_L64XX
@@ -844,8 +838,6 @@ private:
 
   TERN_(MAGNETIC_PARKING_EXTRUDER, static void M951());
 
-  TERN_(TOUCH_SCREEN_CALIBRATION, static void M995());
-  
   TERN_(PLATFORM_M997_SUPPORT, static void M997());
 
   static void M999();

@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -37,7 +37,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V81"
+#define EEPROM_VERSION "V80"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -94,10 +94,6 @@
   #include "../feature/powerloss.h"
 #endif
 
-#if HAS_POWER_MONITOR
-  #include "../feature/power_monitor.h"
-#endif
-
 #include "../feature/pause.h"
 
 #if ENABLED(BACKLASH_COMPENSATION)
@@ -140,19 +136,16 @@
   #define HAS_CASE_LIGHT_BRIGHTNESS 1
 #endif
 
-#if ENABLED(TOUCH_SCREEN_CALIBRATION)
-  #include "../lcd/tft/touch.h"
-#endif
-
 #pragma pack(push, 1) // No padding between variables
 
 typedef struct { uint16_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_stepper_current_t;
 typedef struct { uint32_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_hybrid_threshold_t;
-typedef struct {  int16_t X, Y, Z, X2, Y2, Z2, Z3, Z4;                                 } tmc_sgt_t;
+typedef struct {  int16_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_sgt_t;
+typedef struct { uint32_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_sgv_t;
 typedef struct {     bool X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_stealth_enabled_t;
 
 // Limit an index to an array size
-#define ALIM(I,ARR) _MIN(I, signed(COUNT(ARR) - 1))
+#define ALIM(I,ARR) _MIN(I, COUNT(ARR) - 1)
 
 // Defaults for reset / fill in on load
 static const uint32_t   _DMA[] PROGMEM = DEFAULT_MAX_ACCELERATION;
@@ -261,12 +254,11 @@ typedef struct SettingsDataStruct {
   //
   #if ENABLED(DELTA)
     float delta_height;                                 // M666 H
-    abc_float_t delta_endstop_adj;                      // M666 X Y Z
+    abc_float_t delta_endstop_adj;                      // M666 XYZ
     float delta_radius,                                 // M665 R
           delta_diagonal_rod,                           // M665 L
           delta_segments_per_second;                    // M665 S
-    abc_float_t delta_tower_angle_trim,                 // M665 X Y Z
-                delta_diagonal_rod_trim;                // M665 A B C
+    abc_float_t delta_tower_angle_trim;                 // M665 XYZ
   #elif HAS_EXTRA_ENDSTOPS
     float x2_endstop_adj,                               // M666 X
           y2_endstop_adj,                               // M666 Y
@@ -286,11 +278,11 @@ typedef struct SettingsDataStruct {
   #endif
 
   //
-  // Material Presets
+  // ULTIPANEL
   //
-  #if PREHEAT_COUNT
-    preheat_t ui_material_preset[PREHEAT_COUNT];        // M145 S0 H B F
-  #endif
+  int16_t ui_preheat_hotend_temp[2],                    // M145 S0 H
+          ui_preheat_bed_temp[2];                       // M145 S0 B
+  uint8_t ui_preheat_fan_speed[2];                      // M145 S0 F
 
   //
   // PIDTEMP
@@ -309,11 +301,6 @@ typedef struct SettingsDataStruct {
   #if HAS_USER_THERMISTORS
     user_thermistor_t user_thermistor[USER_THERMISTORS]; // M305 P0 R4700 T100000 B3950
   #endif
-
-  //
-  // Power monitor
-  //
-  uint8_t power_monitor_flags;                          // M430 I V W
 
   //
   // HAS_LCD_CONTRAST
@@ -346,10 +333,11 @@ typedef struct SettingsDataStruct {
   //
   // HAS_TRINAMIC_CONFIG
   //
-  tmc_stepper_current_t tmc_stepper_current;            // M906 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5
-  tmc_hybrid_threshold_t tmc_hybrid_threshold;          // M913 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5
-  tmc_sgt_t tmc_sgt;                                    // M914 X Y Z X2 Y2 Z2 Z3 Z4
-  tmc_stealth_enabled_t tmc_stealth_enabled;            // M569 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5
+  tmc_stepper_current_t tmc_stepper_current;            // M906 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_hybrid_threshold_t tmc_hybrid_threshold;          // M913 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_sgt_t tmc_sgt;                                    // M914 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_sgv_t tmc_sgv;                                    // M915 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
+  tmc_stealth_enabled_t tmc_stealth_enabled;            // M569 X Y Z X2 Y2 Z2 Z3 Z4 E0 E1 E2 E3 E4 E5 E6 E7
 
   //
   // LIN_ADVANCE
@@ -405,13 +393,6 @@ typedef struct SettingsDataStruct {
   //
   #if HAS_CASE_LIGHT_BRIGHTNESS
     uint8_t case_light_brightness;
-  #endif
-
-  //
-  // TOUCH_SCREEN_CALIBRATION
-  //
-  #if ENABLED(TOUCH_SCREEN_CALIBRATION)
-    touch_calibration_t touch_calibration;
   #endif
 
 } SettingsData;
@@ -787,7 +768,6 @@ void MarlinSettings::postprocess() {
         EEPROM_WRITE(delta_diagonal_rod);        // 1 float
         EEPROM_WRITE(delta_segments_per_second); // 1 float
         EEPROM_WRITE(delta_tower_angle_trim);    // 3 floats
-        EEPROM_WRITE(delta_diagonal_rod_trim);   // 3 floats
 
       #elif HAS_EXTRA_ENDSTOPS
 
@@ -824,10 +804,27 @@ void MarlinSettings::postprocess() {
     //
     // LCD Preheat settings
     //
-    #if PREHEAT_COUNT
-      _FIELD_TEST(ui_material_preset);
-      EEPROM_WRITE(ui.material_preset);
-    #endif
+    {
+      _FIELD_TEST(ui_preheat_hotend_temp);
+
+      #if HAS_HOTEND && HAS_LCD_MENU
+        const int16_t (&ui_preheat_hotend_temp)[2]  = ui.preheat_hotend_temp,
+                      (&ui_preheat_bed_temp)[2]     = ui.preheat_bed_temp;
+        const uint8_t (&ui_preheat_fan_speed)[2]    = ui.preheat_fan_speed;
+      #elif ENABLED(DWIN_CREALITY_LCD)
+        const int16_t (&ui_preheat_hotend_temp)[2]  = HMI_ValueStruct.preheat_hotend_temp,
+                      (&ui_preheat_bed_temp)[2]     = HMI_ValueStruct.preheat_bed_temp;
+        const uint8_t (&ui_preheat_fan_speed)[2]    = HMI_ValueStruct.preheat_fan_speed;
+      #else
+        constexpr int16_t ui_preheat_hotend_temp[2] = { PREHEAT_1_TEMP_HOTEND, PREHEAT_2_TEMP_HOTEND },
+                          ui_preheat_bed_temp[2]    = { PREHEAT_1_TEMP_BED, PREHEAT_2_TEMP_BED };
+        constexpr uint8_t ui_preheat_fan_speed[2]   = { PREHEAT_1_FAN_SPEED, PREHEAT_2_FAN_SPEED };
+      #endif
+
+      EEPROM_WRITE(ui_preheat_hotend_temp);
+      EEPROM_WRITE(ui_preheat_bed_temp);
+      EEPROM_WRITE(ui_preheat_fan_speed);
+    }
 
     //
     // PIDTEMP
@@ -885,19 +882,6 @@ void MarlinSettings::postprocess() {
       EEPROM_WRITE(thermalManager.user_thermistor);
     }
     #endif
-
-    //
-    // Power monitor
-    //
-    {
-      #if HAS_POWER_MONITOR
-        const uint8_t &power_monitor_flags = power_monitor.flags;
-      #else
-        constexpr uint8_t power_monitor_flags = 0x00;
-      #endif
-      _FIELD_TEST(power_monitor_flags);
-      EEPROM_WRITE(power_monitor_flags);
-    }
 
     //
     // LCD Contrast
@@ -1147,7 +1131,7 @@ void MarlinSettings::postprocess() {
     //
     {
       tmc_sgt_t tmc_sgt{0};
-      #if USE_SENSORLESS
+      #if USE_SENSORLESS || USE_COLLISION_DETECTION
         TERN_(X_SENSORLESS,  tmc_sgt.X  = stepperX.homing_threshold());
         TERN_(X2_SENSORLESS, tmc_sgt.X2 = stepperX2.homing_threshold());
         TERN_(Y_SENSORLESS,  tmc_sgt.Y  = stepperY.homing_threshold());
@@ -1156,9 +1140,44 @@ void MarlinSettings::postprocess() {
         TERN_(Z2_SENSORLESS, tmc_sgt.Z2 = stepperZ2.homing_threshold());
         TERN_(Z3_SENSORLESS, tmc_sgt.Z3 = stepperZ3.homing_threshold());
         TERN_(Z4_SENSORLESS, tmc_sgt.Z4 = stepperZ4.homing_threshold());
+        TERN_(E0_SENSORLESS, tmc_sgt.E0 = stepperE0.homing_threshold());
+        TERN_(E1_SENSORLESS, tmc_sgt.E0 = stepperE1.homing_threshold());
+        TERN_(E2_SENSORLESS, tmc_sgt.E0 = stepperE2.homing_threshold());
+        TERN_(E3_SENSORLESS, tmc_sgt.E0 = stepperE3.homing_threshold());
+        TERN_(E4_SENSORLESS, tmc_sgt.E0 = stepperE4.homing_threshold());
+        TERN_(E5_SENSORLESS, tmc_sgt.E0 = stepperE5.homing_threshold());
+        TERN_(E6_SENSORLESS, tmc_sgt.E0 = stepperE6.homing_threshold());
+        TERN_(E7_SENSORLESS, tmc_sgt.E0 = stepperE7.homing_threshold());
       #endif
       EEPROM_WRITE(tmc_sgt);
     }
+
+    //
+    // TMC StallGuard velocity threshold
+    //
+    {
+      tmc_sgv_t tmc_sgv{0};
+      #if USE_COLLISION_DETECTION
+        TERN_(X_SENSORLESS,  tmc_sgv.X  = stepperX.stored.velocity_thrs);
+        TERN_(X2_SENSORLESS, tmc_sgv.X2 = stepperX2.stored.velocity_thrs);
+        TERN_(Y_SENSORLESS,  tmc_sgv.Y  = stepperY.stored.velocity_thrs);
+        TERN_(Y2_SENSORLESS, tmc_sgv.Y2 = stepperY2.stored.velocity_thrs);
+        TERN_(Z_SENSORLESS,  tmc_sgv.Z  = stepperZ.stored.velocity_thrs);
+        TERN_(Z2_SENSORLESS, tmc_sgv.Z2 = stepperZ2.stored.velocity_thrs);
+        TERN_(Z3_SENSORLESS, tmc_sgv.Z3 = stepperZ3.stored.velocity_thrs);
+        TERN_(Z4_SENSORLESS, tmc_sgv.Z4 = stepperZ4.stored.velocity_thrs);
+        TERN_(E0_SENSORLESS, tmc_sgv.E0 = stepperE0.stored.velocity_thrs);
+        TERN_(E1_SENSORLESS, tmc_sgv.E0 = stepperE1.stored.velocity_thrs);
+        TERN_(E2_SENSORLESS, tmc_sgv.E0 = stepperE2.stored.velocity_thrs);
+        TERN_(E3_SENSORLESS, tmc_sgv.E0 = stepperE3.stored.velocity_thrs);
+        TERN_(E4_SENSORLESS, tmc_sgv.E0 = stepperE4.stored.velocity_thrs);
+        TERN_(E5_SENSORLESS, tmc_sgv.E0 = stepperE5.stored.velocity_thrs);
+        TERN_(E6_SENSORLESS, tmc_sgv.E0 = stepperE6.stored.velocity_thrs);
+        TERN_(E7_SENSORLESS, tmc_sgv.E0 = stepperE7.stored.velocity_thrs);
+      #endif
+      EEPROM_WRITE(tmc_sgv);
+    }
+
 
     //
     // TMC stepping mode
@@ -1343,13 +1362,6 @@ void MarlinSettings::postprocess() {
     //
     #if HAS_CASE_LIGHT_BRIGHTNESS
       EEPROM_WRITE(case_light_brightness);
-    #endif
-
-    //
-    // TOUCH_SCREEN_CALIBRATION
-    //
-    #if ENABLED(TOUCH_SCREEN_CALIBRATION)
-      EEPROM_WRITE(touch.calibration);
     #endif
 
     //
@@ -1658,7 +1670,6 @@ void MarlinSettings::postprocess() {
           EEPROM_READ(delta_diagonal_rod);        // 1 float
           EEPROM_READ(delta_segments_per_second); // 1 float
           EEPROM_READ(delta_tower_angle_trim);    // 3 floats
-          EEPROM_READ(delta_diagonal_rod_trim);   // 3 floats
 
         #elif HAS_EXTRA_ENDSTOPS
 
@@ -1692,10 +1703,25 @@ void MarlinSettings::postprocess() {
       //
       // LCD Preheat settings
       //
-      #if PREHEAT_COUNT
-        _FIELD_TEST(ui_material_preset);
-        EEPROM_READ(ui.material_preset);
-      #endif
+      {
+        _FIELD_TEST(ui_preheat_hotend_temp);
+
+        #if HAS_HOTEND && HAS_LCD_MENU
+          int16_t (&ui_preheat_hotend_temp)[2]  = ui.preheat_hotend_temp,
+                  (&ui_preheat_bed_temp)[2]     = ui.preheat_bed_temp;
+          uint8_t (&ui_preheat_fan_speed)[2]    = ui.preheat_fan_speed;
+       #elif ENABLED(DWIN_CREALITY_LCD)
+          int16_t (&ui_preheat_hotend_temp)[2]  = HMI_ValueStruct.preheat_hotend_temp,
+                  (&ui_preheat_bed_temp)[2]     = HMI_ValueStruct.preheat_bed_temp;
+          uint8_t (&ui_preheat_fan_speed)[2]    = HMI_ValueStruct.preheat_fan_speed;
+       #else
+          int16_t ui_preheat_hotend_temp[2], ui_preheat_bed_temp[2];
+          uint8_t ui_preheat_fan_speed[2];
+        #endif
+        EEPROM_READ(ui_preheat_hotend_temp); // 2 floats
+        EEPROM_READ(ui_preheat_bed_temp);    // 2 floats
+        EEPROM_READ(ui_preheat_fan_speed);   // 2 floats
+      }
 
       //
       // Hotend PID
@@ -1755,19 +1781,6 @@ void MarlinSettings::postprocess() {
         EEPROM_READ(thermalManager.user_thermistor);
       }
       #endif
-
-      //
-      // Power monitor
-      //
-      {
-        #if HAS_POWER_MONITOR
-          uint8_t &power_monitor_flags = power_monitor.flags;
-        #else
-          uint8_t power_monitor_flags;
-        #endif
-        _FIELD_TEST(power_monitor_flags);
-        EEPROM_READ(power_monitor_flags);
-      }
 
       //
       // LCD Contrast
@@ -1986,7 +1999,7 @@ void MarlinSettings::postprocess() {
         tmc_sgt_t tmc_sgt;
         _FIELD_TEST(tmc_sgt);
         EEPROM_READ(tmc_sgt);
-        #if USE_SENSORLESS
+        #if USE_SENSORLESS || USE_COLLISION_DETECTION
           if (!validating) {
             TERN_(X_SENSORLESS,  stepperX.homing_threshold(tmc_sgt.X));
             TERN_(X2_SENSORLESS, stepperX2.homing_threshold(tmc_sgt.X2));
@@ -1996,6 +2009,43 @@ void MarlinSettings::postprocess() {
             TERN_(Z2_SENSORLESS, stepperZ2.homing_threshold(tmc_sgt.Z2));
             TERN_(Z3_SENSORLESS, stepperZ3.homing_threshold(tmc_sgt.Z3));
             TERN_(Z4_SENSORLESS, stepperZ4.homing_threshold(tmc_sgt.Z4));
+            TERN_(E0_SENSORLESS, stepperE0.homing_threshold(tmc_sgt.E0));
+            TERN_(E1_SENSORLESS, stepperE1.homing_threshold(tmc_sgt.E1));
+            TERN_(E2_SENSORLESS, stepperE2.homing_threshold(tmc_sgt.E2));
+            TERN_(E3_SENSORLESS, stepperE3.homing_threshold(tmc_sgt.E3));
+            TERN_(E4_SENSORLESS, stepperE4.homing_threshold(tmc_sgt.E4));
+            TERN_(E5_SENSORLESS, stepperE5.homing_threshold(tmc_sgt.E5));
+            TERN_(E6_SENSORLESS, stepperE6.homing_threshold(tmc_sgt.E6));
+            TERN_(E7_SENSORLESS, stepperE7.homing_threshold(tmc_sgt.E7));
+          }
+        #endif
+      }
+      
+      //
+      // TMC StallGuard velocity threshold.
+      //
+      {
+        tmc_sgv_t tmc_sgv;
+        _FIELD_TEST(tmc_sgv_t);
+        EEPROM_READ(tmc_sgv);
+        #if USE_COLLISION_DETECTION
+          if (!validating) {
+            TERN_(X_SENSORLESS,  stepperX.velocity_threshold(tmc_sgv.X));
+            TERN_(X2_SENSORLESS, stepperX2.velocity_threshold(tmc_sgv.X2));
+            TERN_(Y_SENSORLESS,  stepperY.velocity_threshold(tmc_sgv.Y));
+            TERN_(Y2_SENSORLESS, stepperY2.velocity_threshold(tmc_sgv.Y2));
+            TERN_(Z_SENSORLESS,  stepperZ.velocity_threshold(tmc_sgv.Z));
+            TERN_(Z2_SENSORLESS, stepperZ2.velocity_threshold(tmc_sgv.Z2));
+            TERN_(Z3_SENSORLESS, stepperZ3.velocity_threshold(tmc_sgv.Z3));
+            TERN_(Z4_SENSORLESS, stepperZ4.velocity_threshold(tmc_sgv.Z4));
+            TERN_(E0_SENSORLESS, stepperE0.velocity_threshold(tmc_sgv.E0));
+            TERN_(E1_SENSORLESS, stepperE1.velocity_threshold(tmc_sgv.E1));
+            TERN_(E2_SENSORLESS, stepperE2.velocity_threshold(tmc_sgv.E2));
+            TERN_(E3_SENSORLESS, stepperE3.velocity_threshold(tmc_sgv.E3));
+            TERN_(E4_SENSORLESS, stepperE4.velocity_threshold(tmc_sgv.E4));
+            TERN_(E5_SENSORLESS, stepperE5.velocity_threshold(tmc_sgv.E5));
+            TERN_(E6_SENSORLESS, stepperE6.velocity_threshold(tmc_sgv.E6));
+            TERN_(E7_SENSORLESS, stepperE7.velocity_threshold(tmc_sgv.E7));
           }
         #endif
       }
@@ -2183,14 +2233,6 @@ void MarlinSettings::postprocess() {
       #if HAS_CASE_LIGHT_BRIGHTNESS
         _FIELD_TEST(case_light_brightness);
         EEPROM_READ(case_light_brightness);
-      #endif
-
-      //
-      // TOUCH_SCREEN_CALIBRATION
-      //
-      #if ENABLED(TOUCH_SCREEN_CALIBRATION)
-        _FIELD_TEST(touch.calibration);
-        EEPROM_READ(touch.calibration);
       #endif
 
       eeprom_error = size_error(eeprom_index - (EEPROM_OFFSET));
@@ -2496,11 +2538,6 @@ void MarlinSettings::reset() {
   TERN_(HAS_CASE_LIGHT_BRIGHTNESS, case_light_brightness = CASE_LIGHT_DEFAULT_BRIGHTNESS);
 
   //
-  // TOUCH_SCREEN_CALIBRATION
-  //
-  TERN_(TOUCH_SCREEN_CALIBRATION, touch.calibration_reset());
-
-  //
   // Magnetic Parking Extruder
   //
   TERN_(MAGNETIC_PARKING_EXTRUDER, mpe_settings_init());
@@ -2544,14 +2581,13 @@ void MarlinSettings::reset() {
   //
 
   #if ENABLED(DELTA)
-    const abc_float_t adj = DELTA_ENDSTOP_ADJ, dta = DELTA_TOWER_ANGLE_TRIM, ddr = DELTA_DIAGONAL_ROD_TRIM_TOWER;
+    const abc_float_t adj = DELTA_ENDSTOP_ADJ, dta = DELTA_TOWER_ANGLE_TRIM;
     delta_height = DELTA_HEIGHT;
     delta_endstop_adj = adj;
     delta_radius = DELTA_RADIUS;
     delta_diagonal_rod = DELTA_DIAGONAL_ROD;
     delta_segments_per_second = DELTA_SEGMENTS_PER_SECOND;
     delta_tower_angle_trim = dta;
-    delta_diagonal_rod_trim = ddr;
   #endif
 
   #if ENABLED(X_DUAL_ENDSTOPS)
@@ -2590,27 +2626,22 @@ void MarlinSettings::reset() {
   //
   // Preheat parameters
   //
-  #if PREHEAT_COUNT
-    #if HAS_HOTEND
-      constexpr uint16_t hpre[] = ARRAY_N(PREHEAT_COUNT, PREHEAT_1_TEMP_HOTEND, PREHEAT_2_TEMP_HOTEND, PREHEAT_3_TEMP_HOTEND, PREHEAT_4_TEMP_HOTEND, PREHEAT_5_TEMP_HOTEND);
+  #if HAS_HOTEND
+    #if ENABLED(DWIN_CREALITY_LCD)
+      HMI_ValueStruct.preheat_hotend_temp[0] = PREHEAT_1_TEMP_HOTEND;
+      HMI_ValueStruct.preheat_hotend_temp[1] = PREHEAT_2_TEMP_HOTEND;
+      HMI_ValueStruct.preheat_bed_temp[0] = PREHEAT_1_TEMP_BED;
+      HMI_ValueStruct.preheat_bed_temp[1] = PREHEAT_2_TEMP_BED;
+      HMI_ValueStruct.preheat_fan_speed[0] = PREHEAT_1_FAN_SPEED;
+      HMI_ValueStruct.preheat_fan_speed[1] = PREHEAT_2_FAN_SPEED;
+    #elif HAS_LCD_MENU
+      ui.preheat_hotend_temp[0] = PREHEAT_1_TEMP_HOTEND;
+      ui.preheat_hotend_temp[1] = PREHEAT_2_TEMP_HOTEND;
+      ui.preheat_bed_temp[0] = PREHEAT_1_TEMP_BED;
+      ui.preheat_bed_temp[1] = PREHEAT_2_TEMP_BED;
+      ui.preheat_fan_speed[0] = PREHEAT_1_FAN_SPEED;
+      ui.preheat_fan_speed[1] = PREHEAT_2_FAN_SPEED;
     #endif
-    #if HAS_HEATED_BED
-      constexpr uint16_t bpre[] = ARRAY_N(PREHEAT_COUNT, PREHEAT_1_TEMP_BED, PREHEAT_2_TEMP_BED, PREHEAT_3_TEMP_BED, PREHEAT_4_TEMP_BED, PREHEAT_5_TEMP_BED);
-    #endif
-    #if HAS_FAN
-      constexpr uint8_t fpre[] = ARRAY_N(PREHEAT_COUNT, PREHEAT_1_FAN_SPEED, PREHEAT_2_FAN_SPEED, PREHEAT_3_FAN_SPEED, PREHEAT_4_FAN_SPEED, PREHEAT_5_FAN_SPEED);
-    #endif
-    LOOP_L_N(i, PREHEAT_COUNT) {
-      #if HAS_HOTEND
-        ui.material_preset[i].hotend_temp = hpre[i];
-      #endif
-      #if HAS_HEATED_BED
-        ui.material_preset[i].bed_temp = bpre[i];
-      #endif
-      #if HAS_FAN
-        ui.material_preset[i].fan_speed = fpre[i];
-      #endif
-    }
   #endif
 
   //
@@ -2618,59 +2649,12 @@ void MarlinSettings::reset() {
   //
 
   #if ENABLED(PIDTEMP)
-    #if ENABLED(PID_PARAMS_PER_HOTEND)
-      constexpr float defKp[] =
-        #ifdef DEFAULT_Kp_LIST
-          DEFAULT_Kp_LIST
-        #else
-          ARRAY_BY_HOTENDS1(DEFAULT_Kp)
-        #endif
-      , defKi[] =
-        #ifdef DEFAULT_Ki_LIST
-          DEFAULT_Ki_LIST
-        #else
-          ARRAY_BY_HOTENDS1(DEFAULT_Ki)
-        #endif
-      , defKd[] =
-        #ifdef DEFAULT_Kd_LIST
-          DEFAULT_Kd_LIST
-        #else
-          ARRAY_BY_HOTENDS1(DEFAULT_Kd)
-        #endif
-      ;
-      static_assert(WITHIN(COUNT(defKp), 1, HOTENDS), "DEFAULT_Kp_LIST must have between 1 and HOTENDS items.");
-      static_assert(WITHIN(COUNT(defKi), 1, HOTENDS), "DEFAULT_Ki_LIST must have between 1 and HOTENDS items.");
-      static_assert(WITHIN(COUNT(defKd), 1, HOTENDS), "DEFAULT_Kd_LIST must have between 1 and HOTENDS items.");
-      #if ENABLED(PID_EXTRUSION_SCALING)
-        constexpr float defKc[] =
-          #ifdef DEFAULT_Kc_LIST
-            DEFAULT_Kc_LIST
-          #else
-            ARRAY_BY_HOTENDS1(DEFAULT_Kc)
-          #endif
-        ;
-        static_assert(WITHIN(COUNT(defKc), 1, HOTENDS), "DEFAULT_Kc_LIST must have between 1 and HOTENDS items.");
-      #endif
-      #if ENABLED(PID_FAN_SCALING)
-        constexpr float defKf[] =
-          #ifdef DEFAULT_Kf_LIST
-            DEFAULT_Kf_LIST
-          #else
-            ARRAY_BY_HOTENDS1(DEFAULT_Kf)
-          #endif
-        ;
-        static_assert(WITHIN(COUNT(defKf), 1, HOTENDS), "DEFAULT_Kf_LIST must have between 1 and HOTENDS items.");
-      #endif
-      #define PID_DEFAULT(N,E) def##N[E]
-    #else
-      #define PID_DEFAULT(N,E) DEFAULT_##N
-    #endif
     HOTEND_LOOP() {
-      PID_PARAM(Kp, e) = float(PID_DEFAULT(Kp, ALIM(e, defKp)));
-      PID_PARAM(Ki, e) = scalePID_i(PID_DEFAULT(Ki, ALIM(e, defKi)));
-      PID_PARAM(Kd, e) = scalePID_d(PID_DEFAULT(Kd, ALIM(e, defKd)));
-      TERN_(PID_EXTRUSION_SCALING, PID_PARAM(Kc, e) = float(PID_DEFAULT(Kc, ALIM(e, defKc))));
-      TERN_(PID_FAN_SCALING, PID_PARAM(Kf, e) = float(PID_DEFAULT(Kf, ALIM(e, defKf))));
+      PID_PARAM(Kp, e) = float(DEFAULT_Kp);
+      PID_PARAM(Ki, e) = scalePID_i(DEFAULT_Ki);
+      PID_PARAM(Kd, e) = scalePID_d(DEFAULT_Kd);
+      TERN_(PID_EXTRUSION_SCALING, PID_PARAM(Kc, e) = DEFAULT_Kc);
+      TERN_(PID_FAN_SCALING, PID_PARAM(Kf, e) = DEFAULT_Kf);
     }
   #endif
 
@@ -2693,11 +2677,6 @@ void MarlinSettings::reset() {
   // User-Defined Thermistors
   //
   TERN_(HAS_USER_THERMISTORS, thermalManager.reset_user_thermistors());
-
-  //
-  // Power Monitor
-  //
-  TERN_(POWER_MONITOR, power_monitor.reset());
 
   //
   // LCD Contrast
@@ -2823,8 +2802,11 @@ void MarlinSettings::reset() {
     #if ENABLED(HYBRID_THRESHOLD)
       inline void say_M913(const bool forReplay) { CONFIG_ECHO_START(); SERIAL_ECHOPGM("  M913"); }
     #endif
-    #if USE_SENSORLESS
+    #if USE_SENSORLESS || USE_COLLISION_DETECTION
       inline void say_M914() { SERIAL_ECHOPGM("  M914"); }
+    #endif
+    #if USE_COLLISION_DETECTION
+    inline void say_M915() { SERIAL_ECHOPGM("  M915"); }
     #endif
   #endif
 
@@ -3147,7 +3129,7 @@ void MarlinSettings::reset() {
         , SP_Z_STR, LINEAR_UNIT(delta_endstop_adj.c)
       );
 
-      CONFIG_ECHO_HEADING("Delta settings: L<diagonal rod> R<radius> H<height> S<segments per sec> XYZ<tower angle trim> ABC<rod trim>");
+      CONFIG_ECHO_HEADING("Delta settings: L<diagonal_rod> R<radius> H<height> S<segments_per_s> XYZ<tower angle corrections>");
       CONFIG_ECHO_START();
       SERIAL_ECHOLNPAIR_P(
           PSTR("  M665 L"), LINEAR_UNIT(delta_diagonal_rod)
@@ -3157,9 +3139,6 @@ void MarlinSettings::reset() {
         , SP_X_STR, LINEAR_UNIT(delta_tower_angle_trim.a)
         , SP_Y_STR, LINEAR_UNIT(delta_tower_angle_trim.b)
         , SP_Z_STR, LINEAR_UNIT(delta_tower_angle_trim.c)
-        , PSTR(" A"), LINEAR_UNIT(delta_diagonal_rod_trim.a)
-        , PSTR(" B"), LINEAR_UNIT(delta_diagonal_rod_trim.b)
-        , PSTR(" C"), LINEAR_UNIT(delta_diagonal_rod_trim.c)
       );
 
     #elif HAS_EXTRA_ENDSTOPS
@@ -3189,22 +3168,16 @@ void MarlinSettings::reset() {
 
     #endif // [XYZ]_DUAL_ENDSTOPS
 
-    #if PREHEAT_COUNT
+    #if HAS_HOTEND && HAS_LCD_MENU
 
       CONFIG_ECHO_HEADING("Material heatup parameters:");
-      LOOP_L_N(i, PREHEAT_COUNT) {
+      LOOP_L_N(i, COUNT(ui.preheat_hotend_temp)) {
         CONFIG_ECHO_START();
-        SERIAL_ECHOLNPAIR_P(
-          PSTR("  M145 S"), (int)i
-          #if HAS_HOTEND
-            , PSTR(" H"), TEMP_UNIT(ui.material_preset[i].hotend_temp)
-          #endif
-          #if HAS_HEATED_BED
-            , SP_B_STR, TEMP_UNIT(ui.material_preset[i].bed_temp)
-          #endif
-          #if HAS_FAN
-            , PSTR(" F"), ui.material_preset[i].fan_speed
-          #endif
+        SERIAL_ECHOLNPAIR(
+            "  M145 S", (int)i
+          , " H", TEMP_UNIT(ui.preheat_hotend_temp[i])
+          , " B", TEMP_UNIT(ui.preheat_bed_temp[i])
+          , " F", int(ui.preheat_fan_speed[i])
         );
       }
 
@@ -3218,7 +3191,7 @@ void MarlinSettings::reset() {
         HOTEND_LOOP() {
           CONFIG_ECHO_START();
           SERIAL_ECHOPAIR_P(
-            #if ENABLED(PID_PARAMS_PER_HOTEND)
+            #if BOTH(HAS_MULTI_HOTEND, PID_PARAMS_PER_HOTEND)
               PSTR("  M301 E"), e,
               SP_P_STR
             #else
@@ -3229,7 +3202,7 @@ void MarlinSettings::reset() {
             , PSTR(" D"), unscalePID_d(PID_PARAM(Kd, e))
           );
           #if ENABLED(PID_EXTRUSION_SCALING)
-            SERIAL_ECHOPAIR_P(SP_C_STR, PID_PARAM(Kc, e));
+            SERIAL_ECHOPAIR(" C", PID_PARAM(Kc, e));
             if (e == 0) SERIAL_ECHOPAIR(" L", thermalManager.lpq_len);
           #endif
           #if ENABLED(PID_FAN_SCALING)
@@ -3495,7 +3468,7 @@ void MarlinSettings::reset() {
       /**
        * TMC Sensorless homing thresholds
        */
-      #if USE_SENSORLESS
+      #if USE_SENSORLESS || USE_COLLISION_DETECTION
         CONFIG_ECHO_HEADING("StallGuard threshold:");
         #if X_SENSORLESS || Y_SENSORLESS || Z_SENSORLESS
           CONFIG_ECHO_START();
@@ -3539,6 +3512,140 @@ void MarlinSettings::reset() {
           say_M914();
           SERIAL_ECHOLNPAIR(" I3 Z", stepperZ4.homing_threshold());
         #endif
+        
+        #if E0_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T0 E", stepperE0.homing_threshold());
+        #endif
+        #if E1_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T1 E", stepperE1.homing_threshold());
+        #endif
+        #if E2_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T2 E", stepperE2.homing_threshold());
+        #endif
+        #if E3_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T3 E", stepperE3.homing_threshold());
+        #endif
+        #if E4_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T4 E", stepperE4.homing_threshold());
+        #endif
+        #if E5_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T5 E", stepperE5.homing_threshold());
+        #endif
+        #if E6_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T6 E", stepperE6.homing_threshold());
+        #endif
+        #if E7_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M914();
+          SERIAL_ECHOLNPAIR(" T7 E", stepperE7.homing_threshold());
+        #endif
+        SERIAL_EOL();
+
+      #endif // USE_SENSORLESS || USE_COLLISION_DETECTION
+      
+      /**
+       * TMC Stallguard velocity thresholds
+       */
+      #if USE_COLLISION_DETECTION
+        CONFIG_ECHO_HEADING("StallGuard velocity threshold:");
+        #if X_SENSORLESS || Y_SENSORLESS || Z_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          #if X_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_X_STR, stepperX.stored.velocity_thrs);
+          #endif
+          #if Y_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Y_STR, stepperY.stored.velocity_thrs);
+          #endif
+          #if Z_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Z_STR, stepperZ.stored.velocity_thrs);
+          #endif
+          SERIAL_EOL();
+        #endif
+
+        #if X2_SENSORLESS || Y2_SENSORLESS || Z2_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOPGM(" I1");
+          #if X2_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_X_STR, stepperX2.stored.velocity_thrs);
+          #endif
+          #if Y2_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Y_STR, stepperY2.stored.velocity_thrs);
+          #endif
+          #if Z2_SENSORLESS
+            SERIAL_ECHOPAIR_P(SP_Z_STR, stepperZ2.stored.velocity_thrs);
+          #endif
+          SERIAL_EOL();
+        #endif
+
+        #if Z3_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" I2 Z", stepperZ3.stored.velocity_thrs);
+        #endif
+
+        #if Z4_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" I3 Z", stepperZ4.stored.velocity_thrs);
+        #endif
+        
+        #if E0_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T0 E", stepperE0.stored.velocity_thrs);
+        #endif
+        #if E1_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T1 E", stepperE1.stored.velocity_thrs);
+        #endif
+        #if E2_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T2 E", stepperE2.stored.velocity_thrs);
+        #endif
+        #if E3_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T3 E", stepperE3.stored.velocity_thrs);
+        #endif
+        #if E4_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T4 E", stepperE4.stored.velocity_thrs);
+        #endif
+        #if E5_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T5 E", stepperE5.stored.velocity_thrs);
+        #endif
+        #if E6_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T6 E", stepperE6.stored.velocity_thrs);
+        #endif
+        #if E7_SENSORLESS
+          CONFIG_ECHO_START();
+          say_M915();
+          SERIAL_ECHOLNPAIR(" T7 E", stepperE7.stored.velocity_thrs);
+        #endif
+        SERIAL_EOL();
 
       #endif // USE_SENSORLESS
 
